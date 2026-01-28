@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TD Cal">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>TD Calibration Offsets Calculator</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --card: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text: #eaeaea;
+            --input-bg: #0f3460;
+            --yellow: #f4d03f;
+            --green: #2ecc71;
+        }
+        
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0 auto;
+            padding: 12px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+            max-width: 400px;
+        }
+        
+        h1 {
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 0 0 8px 0;
+            color: var(--highlight);
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 16px;
+        }
+        
+        .preset-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px 8px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: var(--text);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:active, .preset-btn.active {
+            background: var(--highlight);
+            transform: scale(0.97);
+        }
+        
+        .section {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--yellow);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .input-group label {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+        
+        .input-group input {
+            background: var(--input-bg);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--yellow);
+        }
+        
+        .input-group input::placeholder {
+            color: #666;
+        }
+        
+        .results {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f3460 100%);
+            border: 2px solid var(--green);
+        }
+        
+        .results .section-title {
+            color: var(--green);
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .result-item {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+        
+        .result-item.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .result-label {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+        
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--green);
+            font-family: 'SF Mono', 'Menlo', monospace;
+        }
+        
+        .result-unit {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 4px;
+        }
+        
+        .copy-btn {
+            display: block;
+            width: 100%;
+            margin-top: 14px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: var(--green);
+            color: #000;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--green);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .instructions {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--highlight);
+        }
+        
+        .instructions p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #ccc;
+            line-height: 1.5;
+        }
+        
+        .instructions strong {
+            color: var(--yellow);
+        }
+
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .collapsible-header .toggle {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.open {
+            max-height: 500px;
+        }
+
+        .collapsed .toggle {
+            transform: rotate(-90deg);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 TD GPS Calibration</h1>
+    <p class="subtitle">Offset Calculator v1.0</p>
+    
+    <div class="instructions">
+        <p><strong>Step 1:</strong> Align machine to calibration lasers and set Z height with tape measure<br>
+        <strong>Step 2:</strong> Set Dual Antenna Heading to <strong>-90°</strong><br>
+        <strong>Step 3:</strong> Record yaw error from GPS screen<br>
+        <strong>Step 4:</strong> Enter antenna position in Survey Mode (AH=0)</p>
+    </div>
+
+    <div class="preset-bar">
+        <button class="preset-btn" onclick="loadPreset('cordaRanch')">Corda Ranch</button>
+        <button class="preset-btn" onclick="loadPreset('altYawAirport')">Alt Yaw Airport</button>
+        <button class="preset-btn" onclick="loadPreset('normalAirport')">Normal Airport</button>
+    </div>
+
+    <button class="preset-btn" onclick="clearCalTargets()" style="width: 100%; margin-bottom: 12px; background: var(--highlight);">Clear Calibration Targets</button>
+
+    <div class="section">
+        <div class="section-title">📍 Calibration Targets</div>
+        <p style="font-size: 0.85rem; color: #ccc; margin: 0 0 12px 0;">Input the points for the calibration station. Yaw Z is not needed.</p>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Cal Target N (ft)</label>
+                <input type="number" id="calTargetN" step="any" placeholder="2238669.024" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Yaw Target N (ft)</label>
+                <input type="number" id="yawTargetN" step="any" placeholder="2238650.097" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Cal Target E (ft)</label>
+                <input type="number" id="calTargetE" step="any" placeholder="5936742.761" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Yaw Target E (ft)</label>
+                <input type="number" id="yawTargetE" step="any" placeholder="5936769.228" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Cal Target Z (ft)</label>
+                <input type="number" id="calTargetZ" step="any" placeholder="295.861" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <button class="preset-btn" onclick="clearInputs()" style="width: 100%; margin-bottom: 12px; background: var(--highlight);">Clear Inputs Below</button>
+
+    <div class="section">
+        <div class="section-title">🔧 Dual Head Setup</div>
+        <p style="font-size: 0.85rem; color: #ccc; margin: 0 0 12px 0;">Set Dual Antenna Heading to <strong style="color: var(--yellow);">-90°</strong>, then read and enter the Yaw value from the machine screen.</p>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Dual Antenna Heading (°)</label>
+                <input type="text" id="dualAntennaHeading" value="-90" readonly style="background: #1a1a2e; color: #888;">
+            </div>
+            <div class="input-group">
+                <label>Observed Yaw Error (°)</label>
+                <input type="number" id="observedYawError" step="any" placeholder="-0.8" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📡 Antenna Position (Survey Mode, AH=0)</div>
+        <p style="font-size: 0.85rem; color: #ccc; margin: 0 0 12px 0;">Go to Survey Mode from the main screen. Make sure Antenna Height is set to <strong style="color: var(--yellow);">zero</strong>. Record and input the position.</p>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Antenna N (ft)</label>
+                <input type="number" id="antennaN" step="any" placeholder="2238665.438" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Antenna E (ft)</label>
+                <input type="number" id="antennaE" step="any" placeholder="5936738.283" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Antenna Down (ft)</label>
+                <input type="number" id="antennaD" step="any" placeholder="302.5978" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📐 Mast Angles (from Blue Bar)</div>
+        <p style="font-size: 0.85rem; color: #ccc; margin: 0 0 12px 0;">Input current pitch and roll values from the blue bar.</p>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Pitch (°)</label>
+                <input type="number" id="mastPitch" step="any" placeholder="0.7" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Roll (°)</label>
+                <input type="number" id="mastRoll" step="any" placeholder="0.2" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="section results">
+        <div class="section-title">✅ GPS Offset Values</div>
+        <p style="font-size: 0.85rem; color: #ccc; margin: 0 0 12px 0;">Update the Heading, X, and Y offsets in the Dual Head Setup screen, but leave Z as zero. Input the Z offset in the Position Adjust by Inclinometer screen. Input the Machine ID to include with your copied results — you can paste into text or other docs for future reference.</p>
+        <div class="input-group" style="margin-bottom: 12px;">
+            <label>Machine ID</label>
+            <input type="text" id="machineId" placeholder="Enter machine ID" style="background: var(--input-bg); border: 2px solid transparent; border-radius: 8px; padding: 12px; color: var(--text); font-size: 1rem; width: 100%;">
+        </div>
+        <div class="result-grid">
+            <div class="result-item full-width">
+                <div class="result-label">Heading Offset</div>
+                <div class="result-value"><span id="resultHeading">--</span><span class="result-unit">°</span></div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">X Offset (forward)</div>
+                <div class="result-value"><span id="resultX">--</span><span class="result-unit">ft</span></div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Y Offset (right)</div>
+                <div class="result-value"><span id="resultY">--</span><span class="result-unit">ft</span></div>
+            </div>
+            <div class="result-item full-width">
+                <div class="result-label">Z Offset (down)</div>
+                <div class="result-value"><span id="resultZ">--</span><span class="result-unit">ft</span></div>
+            </div>
+        </div>
+        <button class="copy-btn" onclick="copyResults()">📋 Copy Results</button>
+    </div>
+
+    <div class="section collapsed" id="debugSection">
+        <div class="collapsible-header" onclick="toggleDebug()">
+            <div class="section-title" style="margin-bottom:0">🔍 Debug Values</div>
+            <span class="toggle">▼</span>
+        </div>
+        <div class="collapsible-content" id="debugContent">
+            <div style="margin-top: 12px; font-family: monospace; font-size: 0.8rem; color: #888;">
+                <div>True Heading: <span id="debugHeading">--</span>°</div>
+                <div>ΔN: <span id="debugDN">--</span> ft</div>
+                <div>ΔE: <span id="debugDE">--</span> ft</div>
+                <div>ΔD: <span id="debugDD">--</span> ft</div>
+                <div>X raw: <span id="debugXraw">--</span> ft</div>
+                <div>Y raw: <span id="debugYraw">--</span> ft</div>
+                <div>Z raw: <span id="debugZraw">--</span> ft</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard!</div>
+
+    <script>
+        // Presets from the spreadsheet
+        const presets = {
+            cordaRanch: {
+                calTargetN: 2238669.024,
+                calTargetE: 5936742.761,
+                calTargetZ: 295.861,
+                yawTargetN: 2238650.097,
+                yawTargetE: 5936769.228,
+                dualAntennaHeading: -90,
+                observedYawError: -0.8,
+                antennaN: 2238665.438,
+                antennaE: 5936738.283,
+                antennaD: 302.5978,
+                mastPitch: 0.7,
+                mastRoll: 0.2
+            },
+            altYawAirport: {
+                calTargetN: 2198722.271,
+                calTargetE: 5978579.499,
+                calTargetZ: 10.351,
+                yawTargetN: 2198746.982,
+                yawTargetE: 5978571.371,
+                dualAntennaHeading: -90,
+                observedYawError: -2.15,
+                antennaN: 2198722.6484,
+                antennaE: 5978585.19877,
+                antennaD: 17.06016,
+                mastPitch: 0.1,
+                mastRoll: 0.24
+            },
+            normalAirport: {
+                calTargetN: 2198722.271,
+                calTargetE: 5978579.499,
+                calTargetZ: 10.351,
+                yawTargetN: 2198749.113,
+                yawTargetE: 5978579.741,
+                dualAntennaHeading: -90,
+                observedYawError: -2.4,
+                antennaN: 2198720.8593,
+                antennaE: 5978584.97,
+                antennaD: 17.0481,
+                mastPitch: -0.05,
+                mastRoll: 0
+            }
+        };
+
+        function loadPreset(name) {
+            const p = presets[name];
+            if (!p) return;
+            
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('calTargetN').value = p.calTargetN;
+            document.getElementById('calTargetE').value = p.calTargetE;
+            document.getElementById('calTargetZ').value = p.calTargetZ;
+            document.getElementById('yawTargetN').value = p.yawTargetN;
+            document.getElementById('yawTargetE').value = p.yawTargetE;
+            document.getElementById('dualAntennaHeading').value = p.dualAntennaHeading;
+            document.getElementById('observedYawError').value = p.observedYawError;
+            document.getElementById('antennaN').value = p.antennaN;
+            document.getElementById('antennaE').value = p.antennaE;
+            document.getElementById('antennaD').value = p.antennaD;
+            document.getElementById('mastPitch').value = p.mastPitch;
+            document.getElementById('mastRoll').value = p.mastRoll;
+            
+            calculate();
+        }
+
+        function clearCalTargets() {
+            // Clear calibration targets and yaw targets
+            const fieldsToClear = ['calTargetN', 'calTargetE', 'calTargetZ', 'yawTargetN', 'yawTargetE'];
+            fieldsToClear.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            calculate();
+        }
+
+        function clearInputs() {
+            // Only clear fields below Calibration Targets (not cal targets or yaw targets)
+            const fieldsToClear = ['observedYawError', 'antennaN', 'antennaE', 'antennaD', 'mastPitch', 'mastRoll'];
+            fieldsToClear.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            calculate();
+        }
+
+        function getVal(id) {
+            const v = parseFloat(document.getElementById(id).value);
+            return isNaN(v) ? null : v;
+        }
+
+        function toRadians(deg) {
+            return deg * Math.PI / 180;
+        }
+
+        function toDegrees(rad) {
+            return rad * 180 / Math.PI;
+        }
+
+        function mod(n, m) {
+            return ((n % m) + m) % m;
+        }
+
+        function calculate() {
+            const calN = getVal('calTargetN');
+            const calE = getVal('calTargetE');
+            const calZ = getVal('calTargetZ');
+            const yawN = getVal('yawTargetN');
+            const yawE = getVal('yawTargetE');
+            const dualHeading = getVal('dualAntennaHeading');
+            const yawError = getVal('observedYawError');
+            const antN = getVal('antennaN');
+            const antE = getVal('antennaE');
+            const antD = getVal('antennaD');
+            const pitch = getVal('mastPitch');
+            const roll = getVal('mastRoll');
+
+            // Check if we have enough inputs
+            if ([calN, calE, calZ, yawN, yawE, dualHeading, yawError, antN, antE, antD, pitch, roll].some(v => v === null)) {
+                document.getElementById('resultHeading').textContent = '--';
+                document.getElementById('resultX').textContent = '--';
+                document.getElementById('resultY').textContent = '--';
+                document.getElementById('resultZ').textContent = '--';
+                return;
+            }
+
+            // True Heading calculation: MOD(DEGREES(ATAN2(calN-yawN, calE-yawE))+180, 360) + yawError
+            // Note: Excel ATAN2(x,y) = JS Math.atan2(y,x)
+            const dN_yaw = calN - yawN;
+            const dE_yaw = calE - yawE;
+            const rawAngle = toDegrees(Math.atan2(dE_yaw, dN_yaw));
+            const trueHeading = mod(rawAngle + 180, 360) + yawError;
+
+            // Delta vectors (antenna to workpoint)
+            const deltaN = calN - antN;
+            const deltaE = calE - antE;
+            const deltaD = calZ - antD;
+
+            // Body frame transformation (exact formulas from spreadsheet)
+            const h = toRadians(trueHeading);
+            const sinH = Math.sin(h);
+            const cosH = Math.cos(h);
+
+            // B31: =ΔN*COS(h)*COS(-pitch) + ΔE*SIN(h)*COS(-pitch) + ΔD*(-SIN(-pitch))
+            const xRaw = deltaN * cosH * Math.cos(toRadians(-pitch)) + 
+                         deltaE * sinH * Math.cos(toRadians(-pitch)) + 
+                         deltaD * (-Math.sin(toRadians(-pitch)));
+            
+            // B32: =ΔN*(-SIN(h)*COS(-roll) - COS(h)*SIN(pitch)*SIN(-roll)) + ΔE*(COS(h)*COS(-roll) - SIN(h)*SIN(pitch)*SIN(-roll)) + ΔD*COS(pitch)*SIN(-roll)
+            const yRaw = deltaN * (-sinH * Math.cos(toRadians(-roll)) - cosH * Math.sin(toRadians(pitch)) * Math.sin(toRadians(-roll))) +
+                         deltaE * (cosH * Math.cos(toRadians(-roll)) - sinH * Math.sin(toRadians(pitch)) * Math.sin(toRadians(-roll))) +
+                         deltaD * Math.cos(toRadians(pitch)) * Math.sin(toRadians(-roll));
+            
+            // B33: =ΔN*(-SIN(h)*SIN(roll) + COS(h)*SIN(pitch)*COS(roll)) + ΔE*(COS(h)*SIN(roll) + SIN(h)*SIN(pitch)*COS(roll)) + ΔD*COS(pitch)*COS(roll)
+            const zRaw = deltaN * (-sinH * Math.sin(toRadians(roll)) + cosH * Math.sin(toRadians(pitch)) * Math.cos(toRadians(roll))) +
+                         deltaE * (cosH * Math.sin(toRadians(roll)) + sinH * Math.sin(toRadians(pitch)) * Math.cos(toRadians(roll))) +
+                         deltaD * Math.cos(toRadians(pitch)) * Math.cos(toRadians(roll));
+
+            // Final offset values
+            const headingOffset = -(yawError - dualHeading);
+            const xOffset = xRaw;
+            const yOffset = -yRaw;
+            const zOffset = -zRaw;
+
+            // Display results
+            document.getElementById('resultHeading').textContent = headingOffset.toFixed(3);
+            document.getElementById('resultX').textContent = xOffset.toFixed(3);
+            document.getElementById('resultY').textContent = yOffset.toFixed(3);
+            document.getElementById('resultZ').textContent = zOffset.toFixed(3);
+
+            // Debug values
+            document.getElementById('debugHeading').textContent = trueHeading.toFixed(4);
+            document.getElementById('debugDN').textContent = deltaN.toFixed(4);
+            document.getElementById('debugDE').textContent = deltaE.toFixed(4);
+            document.getElementById('debugDD').textContent = deltaD.toFixed(4);
+            document.getElementById('debugXraw').textContent = xRaw.toFixed(4);
+            document.getElementById('debugYraw').textContent = yRaw.toFixed(4);
+            document.getElementById('debugZraw').textContent = zRaw.toFixed(4);
+        }
+
+        function copyResults() {
+            const machineId = document.getElementById('machineId').value || 'N/A';
+            const h = document.getElementById('resultHeading').textContent;
+            const x = document.getElementById('resultX').textContent;
+            const y = document.getElementById('resultY').textContent;
+            const z = document.getElementById('resultZ').textContent;
+            
+            if (h === '--') {
+                showToast('No results to copy');
+                return;
+            }
+            
+            const text = `Machine\t${machineId}\nHeading\t${h}\nX\t${x}\nY\t${y}\nZ\t${z}`;
+            
+            // Try modern clipboard API first, fallback to textarea method for iOS
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Copied to clipboard!');
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+        
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '0';
+            textarea.setAttribute('readonly', '');
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('Copied to clipboard!');
+            } catch (err) {
+                showToast('Long-press to copy');
+                // Show the text in a prompt as last resort
+                prompt('Copy these values:', text);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function toggleDebug() {
+            const section = document.getElementById('debugSection');
+            const content = document.getElementById('debugContent');
+            section.classList.toggle('collapsed');
+            content.classList.toggle('open');
+        }
+
+        // Register service worker for offline use
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+
+        // Initial calculation
+        calculate();
+    </script>
+</body>
+</html>

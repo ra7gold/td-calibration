@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a1a2e"/>
+  <circle cx="256" cy="200" r="80" fill="none" stroke="#e94560" stroke-width="20"/>
+  <line x1="256" y1="120" x2="256" y2="80" stroke="#e94560" stroke-width="16" stroke-linecap="round"/>
+  <line x1="336" y1="200" x2="376" y2="200" stroke="#e94560" stroke-width="16" stroke-linecap="round"/>
+  <line x1="256" y1="280" x2="256" y2="320" stroke="#e94560" stroke-width="16" stroke-linecap="round"/>
+  <line x1="176" y1="200" x2="136" y2="200" stroke="#e94560" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="256" cy="200" r="15" fill="#2ecc71"/>
+  <text x="256" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="#f4d03f">TD</text>
+</svg>
